@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC1090,SC2086,SC2034
 
 if [[ $EUID -ne 0 ]]; then
 	echo -e "Sorry, you need to run this as root"
@@ -14,7 +15,7 @@ NPS_VER=1.13.35.2
 HEADERMOD_VER=0.33
 LIBMAXMINDDB_VER=1.4.3
 GEOIP2_VER=3.3
-LUA_JIT_VER=2.1-20201027
+LUA_JIT_VER=2.1-20201229
 LUA_NGINX_VER=0.10.19
 NGINX_DEV_KIT=0.3.1
 
@@ -28,6 +29,7 @@ if [[ $HEADLESS == "y" ]]; then
 	GEOIP=${GEOIP:-n}
 	FANCYINDEX=${FANCYINDEX:-n}
 	CACHEPURGE=${CACHEPURGE:-n}
+	SUBFILTER=${SUBFILTER:-n}
 	LUA=${LUA:-n}
 	WEBDAV=${WEBDAV:-n}
 	VTS=${VTS:-n}
@@ -35,6 +37,9 @@ if [[ $HEADLESS == "y" ]]; then
 	TESTCOOKIE=${TESTCOOKIE:-n}
 	HTTP3=${HTTP3:-n}
 	MODSEC=${MODSEC:-n}
+	HPACK=${HPACK:-n}
+	RTMP=${RTMP:-n}
+	SUBFILTER=${SUBFILTER:-n}
 	SSL=${SSL:-1}
 	RM_CONF=${RM_CONF:-y}
 	RM_LOGS=${RM_LOGS:-y}
@@ -71,15 +76,15 @@ case $OPTION in
 		echo "   1) Stable $NGINX_STABLE_VER"
 		echo "   2) Mainline $NGINX_MAINLINE_VER"
 		echo ""
-		while [[ $NGINX_VER != "1" && $NGINX_VER != "2" ]]; do
-			read -rp "Select an option [1-2]: " NGINX_VER
+		while [[ $NGINX_VER != "1" && $NGINX_VER != "2" && $NGINX_VER != "STABLE" && $NGINX_VER != "MAINLINE" ]]; do
+			read -rp "Select an option [1-2]: " -e -i 1 NGINX_VER
 		done
 	fi
 	case $NGINX_VER in
-	1)
+	1 | STABLE)
 		NGINX_VER=$NGINX_STABLE_VER
 		;;
-	2)
+	2 | MAINLINE)
 		NGINX_VER=$NGINX_MAINLINE_VER
 		;;
 	*)
@@ -94,49 +99,58 @@ case $OPTION in
 		echo ""
 		echo "Modules to install :"
 		while [[ $PAGESPEED != "y" && $PAGESPEED != "n" ]]; do
-			read -rp "       PageSpeed $NPS_VER [y/n]: " -e PAGESPEED
+			read -rp "       PageSpeed $NPS_VER [y/n]: " -e -i n PAGESPEED
 		done
 		while [[ $BROTLI != "y" && $BROTLI != "n" ]]; do
-			read -rp "       Brotli [y/n]: " -e BROTLI
+			read -rp "       Brotli [y/n]: " -e -i n BROTLI
 		done
 		while [[ $HEADERMOD != "y" && $HEADERMOD != "n" ]]; do
-			read -rp "       Headers More $HEADERMOD_VER [y/n]: " -e HEADERMOD
+			read -rp "       Headers More $HEADERMOD_VER [y/n]: " -e -i n HEADERMOD
 		done
 		while [[ $GEOIP != "y" && $GEOIP != "n" ]]; do
-			read -rp "       GeoIP [y/n]: " -e GEOIP
+			read -rp "       GeoIP [y/n]: " -e -i n GEOIP
 		done
 		while [[ $FANCYINDEX != "y" && $FANCYINDEX != "n" ]]; do
-			read -rp "       Fancy index [y/n]: " -e FANCYINDEX
+			read -rp "       Fancy index [y/n]: " -e -i n FANCYINDEX
 		done
 		while [[ $CACHEPURGE != "y" && $CACHEPURGE != "n" ]]; do
-			read -rp "       ngx_cache_purge [y/n]: " -e CACHEPURGE
+			read -rp "       ngx_cache_purge [y/n]: " -e -i n CACHEPURGE
+		done
+		while [[ $SUBFILTER != "y" && $SUBFILTER != "n" ]]; do
+			read -rp "       nginx_substitutions_filter [y/n]: " -e -i n SUBFILTER
 		done
 		while [[ $LUA != "y" && $LUA != "n" ]]; do
-			read -rp "       ngx_http_lua_module [y/n]: " -e LUA
+			read -rp "       ngx_http_lua_module [y/n]: " -e -i n LUA
 		done
 		while [[ $WEBDAV != "y" && $WEBDAV != "n" ]]; do
-			read -rp "       nginx WebDAV [y/n]: " -e WEBDAV
+			read -rp "       nginx WebDAV [y/n]: " -e -i n WEBDAV
 		done
 		while [[ $VTS != "y" && $VTS != "n" ]]; do
-			read -rp "       nginx VTS [y/n]: " -e VTS
+			read -rp "       nginx VTS [y/n]: " -e -i n VTS
+		done
+		while [[ $RTMP != "y" && $RTMP != "n" ]]; do
+			read -rp "       nginx RTMP [y/n]: " -e -i n RTMP
 		done
 		while [[ $RTMP != "y" && $RTMP != "n" ]]; do
 			read -rp "       nginx RTMP [y/n]: " -e RTMP
 		done
 		while [[ $TESTCOOKIE != "y" && $TESTCOOKIE != "n" ]]; do
-			read -rp "       nginx testcookie [y/n]: " -e TESTCOOKIE
+			read -rp "       nginx testcookie [y/n]: " -e -i n TESTCOOKIE
 		done
 		while [[ $HTTP3 != "y" && $HTTP3 != "n" ]]; do
-			read -rp "       HTTP/3 (by Cloudflare, WILL INSTALL BoringSSL, Quiche, Rust and Go) [y/n]: " -e HTTP3
+			read -rp "       HTTP/3 (by Cloudflare, WILL INSTALL BoringSSL, Quiche, Rust and Go) [y/n]: " -e -i n HTTP3
 		done
 		while [[ $MODSEC != "y" && $MODSEC != "n" ]]; do
-			read -rp "       nginx ModSecurity [y/n]: " -e MODSEC
+			read -rp "       nginx ModSecurity [y/n]: " -e -i n MODSEC
 		done
 		if [[ $MODSEC == 'y' ]]; then
-			read -rp "       Enable nginx ModSecurity? [y/n]: " -e MODSEC_ENABLE
+			read -rp "       Enable nginx ModSecurity? [y/n]: " -e -i n MODSEC_ENABLE
 		fi
 		while [[ $TLSDYN != "y" && $TLSDYN != "n" ]]; do
-			read -rp "       Cloudflare's TLS Dynamic Record Resizing patch [y/n]: " -e TLSDYN
+			read -rp "       Cloudflare's TLS Dynamic Record Resizing patch [y/n]: " -e -i n TLSDYN
+		done
+		while [[ $HPACK != "y" && $HPACK != "n" ]]; do
+			read -rp "       Cloudflare's full HPACK encoding patch [y/n]: " -e -i n HPACK
 		done
 		if [[ $HTTP3 != 'y' ]]; then
 			echo ""
@@ -146,18 +160,18 @@ case $OPTION in
 			echo "   3) LibreSSL $LIBRESSL_VER from source "
 			echo ""
 			while [[ $SSL != "1" && $SSL != "2" && $SSL != "3" ]]; do
-				read -rp "Select an option [1-3]: " SSL
+				read -rp "Select an option [1-3]: " -e -i 1 SSL
 			done
 		fi
 	fi
 	if [[ $HTTP3 != 'y' ]]; then
 		case $SSL in
-		1) ;;
+		1 | SYSTEM) ;;
 
-		2)
+		2 | OPENSSL)
 			OPENSSL=y
 			;;
-		3)
+		3 | LIBRESSL)
 			LIBRESSL=y
 			;;
 		*)
@@ -246,6 +260,12 @@ case $OPTION in
 	if [[ $CACHEPURGE == 'y' ]]; then
 		cd /usr/local/src/nginx/modules || exit 1
 		git clone --depth 1 https://github.com/FRiCKLE/ngx_cache_purge
+	fi
+
+	# Nginx Substitutions Filter
+	if [[ $SUBFILTER == 'y' ]]; then
+		cd /usr/local/src/nginx/modules || exit 1
+		git clone https://github.com/yaoweibin/ngx_http_substitutions_filter_module
 	fi
 
 	# Lua
@@ -416,6 +436,13 @@ case $OPTION in
 		)
 	fi
 
+	if [[ $SUBFILTER == 'y' ]]; then
+		NGINX_MODULES=$(
+			echo "$NGINX_MODULES"
+			echo "--add-module=/usr/local/src/nginx/modules/ngx_http_substitutions_filter_module"
+		)
+	fi
+
 	# Lua
 	if [[ $LUA == 'y' ]]; then
 		NGINX_MODULES=$(
@@ -452,6 +479,14 @@ case $OPTION in
 		)
 	fi
 	
+	if [[ $RTMP == 'y' ]]; then
+		git clone --quiet https://github.com/arut/nginx-rtmp-module.git /usr/local/src/nginx/modules/nginx-rtmp-module
+		NGINX_MODULES=$(
+			echo "$NGINX_MODULES"
+			echo --add-module=/usr/local/src/nginx/modules/nginx-rtmp-module
+		)
+	fi
+
 	if [[ $RTMP == 'y' ]]; then
 		git clone --quiet https://github.com/arut/nginx-rtmp-module.git /usr/local/src/nginx/modules/nginx-rtmp-module
 		NGINX_MODULES=$(
@@ -503,6 +538,24 @@ case $OPTION in
 		NGINX_MODULES=$(
 			echo "$NGINX_MODULES"
 			echo --with-http_v3_module
+		)
+	fi
+
+	# Cloudflare's Cloudflare's full HPACK encoding patch
+	if [[ $HPACK == 'y' ]]; then
+		if [[ $HTTP3 == 'n' ]]; then
+			# Working Patch from https://github.com/hakasenyang/openssl-patch/issues/2#issuecomment-413449809
+			wget https://raw.githubusercontent.com/hakasenyang/openssl-patch/master/nginx_hpack_push_1.15.3.patch -O nginx_http2_hpack.patch
+
+		else
+			# Same patch as above but fixed conflicts with the HTTP/3 patch
+			wget https://raw.githubusercontent.com/angristan/nginx-autoinstall/master/patches/nginx_hpack_push_with_http3.patch -O nginx_http2_hpack.patch
+		fi
+		patch -p1 <nginx_http2_hpack.patch
+
+		NGINX_OPTIONS=$(
+			echo "$NGINX_OPTIONS"
+			echo --with-http_v2_hpack_enc
 		)
 	fi
 
@@ -567,10 +620,10 @@ case $OPTION in
 2) # Uninstall Nginx
 	if [[ $HEADLESS != "y" ]]; then
 		while [[ $RM_CONF != "y" && $RM_CONF != "n" ]]; do
-			read -rp "       Remove configuration files ? [y/n]: " -e RM_CONF
+			read -rp "       Remove configuration files ? [y/n]: " -e -i n RM_CONF
 		done
 		while [[ $RM_LOGS != "y" && $RM_LOGS != "n" ]]; do
-			read -rp "       Remove logs files ? [y/n]: " -e RM_LOGS
+			read -rp "       Remove logs files ? [y/n]: " -e -i n RM_LOGS
 		done
 	fi
 	# Stop Nginx
