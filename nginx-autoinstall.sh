@@ -6,6 +6,11 @@ if [[ $EUID -ne 0 ]]; then
 	exit 1
 fi
 
+# Take headless as script argument
+if [[ $1 == "headless" ]]; then
+	HEADLESS=y
+fi
+
 # Define versions
 NGINX_MAINLINE_VER=${NGINX_MAINLINE_VER:-1.21.6}
 NGINX_STABLE_VER=${NGINX_STABLE_VER:-1.22.0}
