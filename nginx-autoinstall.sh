@@ -6,9 +6,17 @@ if [[ $EUID -ne 0 ]]; then
 	exit 1
 fi
 
+# Get latest version from nginx.org
+curl_request() {
+	curl -s https://nginx.org/en/download.html |
+	grep -oP "(?<="$1" version).*?(?=[0-9]+\.[0-9]+\.[0-9](-[0-9])?</a)" |
+	grep -oP "[0-9]+\.[0-9]+\.[0-9](-[0-9])?"
+}
+latest_mainline=$(curl_request Mainline)
+latest_stable=$(curl_request Stable)
 # Define versions
-NGINX_MAINLINE_VER=${NGINX_MAINLINE_VER:-1.21.6}
-NGINX_STABLE_VER=${NGINX_STABLE_VER:-1.22.0}
+NGINX_MAINLINE_VER=${NGINX_MAINLINE_VER:-$latest_mainline}
+NGINX_STABLE_VER=${NGINX_STABLE_VER:-$latest_stable}
 LIBRESSL_VER=${LIBRESSL_VER:-3.3.1}
 OPENSSL_VER=${OPENSSL_VER:-1.1.1l}
 NPS_VER=${NPS_VER:-1.13.35.2}
