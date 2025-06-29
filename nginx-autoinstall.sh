@@ -6,6 +6,10 @@ if [[ $EUID -ne 0 ]]; then
 	exit 1
 fi
 
+# Install curl if not installed
+if ! [[ $(command -v 'curl') ]]; then
+	apt-get install curl
+fi
 # Get latest version from nginx.org
 curl_request() {
 	curl -s https://nginx.org/en/download.html |
