@@ -1,4 +1,6 @@
 # nginx-autoinstall
+[![Sponsor @tmiland](https://img.shields.io/badge/Sponsor-%40tmiland-ea4aaa?logo=githubsponsors&logoColor=white)](https://github.com/sponsors/tmiland)
+
 
 Compile and install NGINX from source with optional features, modules and patches.
 
